@@ -24,7 +24,7 @@ class ServoConvert:
 		# --- value is in [-1, 1]
 		self.value = value_in
 		self.value_out = self._dir * value_in * self._half_range + self._center
-		print(self.id, self.value_out)
+		rospy.loginfo(f"IN: {self.id}, OUT: {self.value_out}")
 		return self.value_out
 
 
@@ -32,7 +32,7 @@ class DkLowLevelCtrl:
 	def __init__(self):
 		rospy.loginfo("Setting Up the Node...")
 
-		rospy.init_node('dk_llc')
+		rospy.init_node('carmaster')
 		self.actuators = {'throttle': ServoConvert(id=1), 'steering': ServoConvert(id=2)}
 		rospy.loginfo("> Actuators corrrectly initialized")
 
@@ -62,6 +62,16 @@ class DkLowLevelCtrl:
 		# -- Save the time
 		self._last_time_cmd_rcv = time.time()
 
+		if not (-1 <= message.linear.x <= 1):
+			rospy.logerr("Movement message is bigger than 1! (or smaller than -1)! Can't set value!")
+			rospy.logerr(f"message.linear.x={message.linear.x}")
+			return
+
+		if not (-1 <= message.angular.z <= 1):
+			rospy.logerr("Movement message is bigger than 1! (or smaller than -1)! Can't set value!")
+			rospy.logerr(f"message.angular.z={message.angular.z}")
+			return
+
 		# -- Convert vel into servo values
 		self.actuators['throttle'].get_value_out(message.linear.x)
 		self.actuators['steering'].get_value_out(message.angular.z)
@@ -72,7 +82,7 @@ class DkLowLevelCtrl:
 		# -- Convert vel into servo values
 		self.actuators['throttle'].get_value_out(0)
 		self.actuators['steering'].get_value_out(0)
-		rospy.loginfo("Setting actutors to idle")
+		rospy.loginfo("Setting actuators to idle")
 		self.send_servo_msg()
 
 	def send_servo_msg(self):
@@ -86,7 +96,7 @@ class DkLowLevelCtrl:
 
 	@property
 	def is_controller_connected(self):
-		print(time.time() - self._last_time_cmd_rcv)
+		rospy.loginfo(time.time() - self._last_time_cmd_rcv)
 		return time.time() - self._last_time_cmd_rcv < self._timeout_s
 
 	def run(self):
@@ -95,7 +105,7 @@ class DkLowLevelCtrl:
 		rate = rospy.Rate(10)
 
 		while not rospy.is_shutdown():
-			print(self._last_time_cmd_rcv, self.is_controller_connected)
+			rospy.loginfo(f"Last time: {self._last_time_cmd_rcv}, Connected = {self.is_controller_connected}")
 			if not self.is_controller_connected:
 				self.set_actuators_idle()
 
@@ -103,5 +113,5 @@ class DkLowLevelCtrl:
 
 
 if __name__ == "__main__":
-	dk_llc = DkLowLevelCtrl()
-	dk_llc.run()
+	carcontroller = DkLowLevelCtrl()
+	carcontroller.run()
