@@ -7,6 +7,11 @@ import time
 FREQ = 50
 RATE = 10  # update
 
+def saturate_number(x, lower, upper):
+	return min(max(x, lower), upper)
+    
+    
+
 class ServoConvert:
 	# range is 5-10% (1-2ms)
 	def __init__(self, id=1, center_value=7.5, range=5, direction=1):
@@ -34,7 +39,7 @@ class DkLowLevelCtrl:
 		rospy.loginfo("Setting Up the Node...")
 
 		rospy.init_node('carmaster')
-		self.actuators = {'throttle': ServoConvert(id=1), 'steering': ServoConvert(id=2)}
+		self.actuators = {'throttle': ServoConvert(id=1), 'steering': ServoConvert(id=2, direction=-1)}
 		rospy.loginfo("> Actuators corrrectly initialized")
 
 		self._servo_msg = PWMArray()
@@ -83,20 +88,25 @@ class DkLowLevelCtrl:
 		# -- Save the time
 		self._last_time_cmd_rcv = time.time()
 
+		
+		lin_x = saturate_number(message.linear.x, -1, 1)
+		ang_z = saturate_number(message.angular.z, -1, 1)
+		
 		if not (-1 <= message.linear.x <= 1):
-			rospy.logerr("Movement message is bigger than 1! (or smaller than -1)! Can't set value!")
-			rospy.logerr(f"message.linear.x={message.linear.x}")
-			return
+			rospy.logwarn("Movement message is bigger than 1 (or smaller than -1)! Will be saturated!")
+			rospy.logwarn(f"message.linear.x={message.linear.x}")
+			
+            
 
 		if not (-1 <= message.angular.z <= 1):
-			rospy.logerr("Movement message is bigger than 1! (or smaller than -1)! Can't set value!")
-			rospy.logerr(f"message.angular.z={message.angular.z}")
-			return
+			rospy.logwarn("Movement message is bigger than 1! (or smaller than -1)! Will be saturated!")
+			rospy.logwarn(f"message.angular.z={message.angular.z}")
+			
 
 		# -- Convert vel into servo values
-		self.actuators['throttle'].get_value_out(message.linear.x)
-		self.actuators['steering'].get_value_out(message.angular.z)
-		rospy.loginfo("Got a command v = %2.1f  s = %2.1f" % (message.linear.x, message.angular.z))
+		self.actuators['throttle'].get_value_out(lin_x)
+		self.actuators['steering'].get_value_out(ang_z)
+		rospy.loginfo("Got a command v = %2.1f  s = %2.1f" % (lin_x, ang_z))
 		self.send_servo_msg()
 
 	def set_actuators_idle(self):
