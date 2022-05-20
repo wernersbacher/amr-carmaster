@@ -8,7 +8,8 @@
     <include file="$(find amr-stream)/launch/webcam-small.launch">
 
 	  	<!-- set camera fps to (if the device allows) -->
-	  	<arg name="fps" value="20"/>
+  	    <arg name="colors" default="true" />
+	  	<arg name="fps" value="15"/>
 		<arg name="video_stream_provider" default="0" />
         <arg name="width" value="300"/>
 	    <arg name="height" value="100"/>
