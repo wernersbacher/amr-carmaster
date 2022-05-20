@@ -1,22 +1,17 @@
 <launch>
-    <node pkg="ros_pi_pwm" type="pwm.py" name="pwm_node"/>
-
+    <node pkg="ros_pi_pwm" type="pwm.py" name="pwm_node" output="screen"/>
 
     <node pkg="carmaster" type="main.py" name="carmaster_node"/>
 
     <!-- TO ADD: Image sender -->
 
-    <include file="$(find video_stream_opencv)/launch/camera.launch">
+    <include file="$(find amr-stream)/launch/webcam-small.launch">
 
 	  	<!-- set camera fps to (if the device allows) -->
-	  	<arg name="set_camera_fps" value="30"/>
-      	<!-- set buffer queue size of frame capturing to (1 means we want the latest frame only) -->
-      	<arg name="buffer_queue_size" value="1" />
-	  	<!-- throttling the querying of frames to -->
-	  	<arg name="fps" value="30" />
-
-        <arg name="width" value="1280"/>
-	    <arg name="height" value="720"/>
+	  	<arg name="fps" value="20"/>
+		<arg name="video_stream_provider" default="0" />
+        <arg name="width" value="300"/>
+	    <arg name="height" value="100"/>
 
     </include>
 
