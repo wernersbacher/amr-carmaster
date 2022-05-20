@@ -1,5 +1,5 @@
 <launch>
-    <node pkg="ros_pi_pwm" type="pwm.py" name="pwm_node" output="screen"/>
+    <node pkg="ros_pi_pwm" type="pwm.py" name="pwm_node"/>
 
     <node pkg="carmaster" type="main.py" name="carmaster_node"/>
 
