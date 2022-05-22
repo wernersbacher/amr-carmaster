@@ -61,8 +61,9 @@ class DkLowLevelCtrl:
 		# --- Create the Subscriber to lifeping
 		self.ros_sub_twist = rospy.Subscriber("/emergency_stop", Bool, self.check_emergency_state)
 		self._last_time_emergency_rcv = time.time()
-		self._last_emergency_msg = True  # no driving allowed until we have positive message from /emergency_stop
+		self._last_emergency_msg = True   # no driving allowed until we have positive message from /emergency_stop
 		self._timeout_emergency = 1  # after 1 second message timeout, bring the car to a stop
+		self._last_emergency_state = True  # don't touch here, it's to save the last state of property is_emergency_stop
 		rospy.loginfo("> Subscriber /emergency_stop corrrectly initialized")
 
 		rospy.loginfo("Initialization complete")
@@ -76,8 +77,13 @@ class DkLowLevelCtrl:
 		rospy.logdebug(time.time() - self._last_time_emergency_rcv)
 		# if emergency stop is set to true or the last message is too long ago, we set the state to TRUE
 		state = self._last_emergency_msg or time.time() - self._last_time_emergency_rcv > self._timeout_emergency
-		if state:
+		if state and not self._last_emergency_state:
 			rospy.logwarn(" !!!! ------ Emergency STOP  ------ !!!! ")
+
+		elif not state and self._last_emergency_state:
+			rospy.logwarn(" >>>> ------ Driving is allowed ------ <<<< ")
+		
+		self._last_emergency_state = state
 		return state
 
 	def set_actuators_from_cmdvel(self, message):
