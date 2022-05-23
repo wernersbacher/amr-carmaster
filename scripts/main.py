@@ -43,7 +43,7 @@ class DkLowLevelCtrl:
 		self.rate = rospy.get_param('~hz', 10)
 		rospy.loginfo(f"Refreshing at {self.rate} HZ.")
 
-		self.actuators = {'throttle': ServoConvert(id=2), 'steering': ServoConvert(id=1, direction=-1)}
+		self.actuators = {'throttle': ServoConvert(id=2), 'steering': ServoConvert(id=1, direction=1)}
 		rospy.loginfo("> Actuators corrrectly initialized")
 
 		self._servo_msg = PWMArray()
@@ -122,7 +122,7 @@ class DkLowLevelCtrl:
 		# -- Convert vel into servo values
 		self.actuators['throttle'].get_value_out(0)
 		self.actuators['steering'].get_value_out(0)
-		rospy.logdebug("Setting actuators to idle")
+		rospy.loginfo("Setting actuators to idle")
 		self.send_servo_msg()
 
 	def send_servo_msg(self):
@@ -145,7 +145,7 @@ class DkLowLevelCtrl:
 		rate = rospy.Rate(self.rate)
 
 		while not rospy.is_shutdown():
-			rospy.logdebug(f"Emergency Stop = {self.is_emergency_stop}, Connected = {self.is_controller_connected}")
+			rospy.loginfo(f"Emergency Stop = {self.is_emergency_stop}, Connected = {self.is_controller_connected}")
 			if self.is_emergency_stop or not self.is_controller_connected:
 				self.set_actuators_idle()
 
