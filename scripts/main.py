@@ -5,11 +5,9 @@ from std_msgs.msg import Bool
 import time
 
 FREQ = 50
-RATE = 10  # update
 
 def saturate_number(x, lower, upper):
 	return min(max(x, lower), upper)
-    
     
 
 class ServoConvert:
@@ -39,7 +37,13 @@ class DkLowLevelCtrl:
 		rospy.loginfo("Setting Up the Node...")
 
 		rospy.init_node('carmaster')
-		self.actuators = {'throttle': ServoConvert(id=1), 'steering': ServoConvert(id=2, direction=-1)}
+
+		self.max_speed = rospy.get_param('~max_speed', 1.0)
+		rospy.loginfo(f"Max Speed of {self.max_speed} allowed.")
+		self.rate = rospy.get_param('~hz', 10)
+		rospy.loginfo(f"Refreshing at {self.rate} HZ.")
+
+		self.actuators = {'throttle': ServoConvert(id=2), 'steering': ServoConvert(id=1, direction=-1)}
 		rospy.loginfo("> Actuators corrrectly initialized")
 
 		self._servo_msg = PWMArray()
@@ -95,14 +99,13 @@ class DkLowLevelCtrl:
 		self._last_time_cmd_rcv = time.time()
 
 		
-		lin_x = saturate_number(message.linear.x, -1, 1)
+		lin_x = saturate_number(message.linear.x, -1, 1) * self.max_speed
 		ang_z = saturate_number(message.angular.z, -1, 1)
 		
 		if not (-1 <= message.linear.x <= 1):
 			rospy.logwarn("Movement message is bigger than 1 (or smaller than -1)! Will be saturated!")
 			rospy.logwarn(f"message.linear.x={message.linear.x}")
 			
-            
 
 		if not (-1 <= message.angular.z <= 1):
 			rospy.logwarn("Movement message is bigger than 1! (or smaller than -1)! Will be saturated!")
@@ -112,22 +115,22 @@ class DkLowLevelCtrl:
 		# -- Convert vel into servo values
 		self.actuators['throttle'].get_value_out(lin_x)
 		self.actuators['steering'].get_value_out(ang_z)
-		rospy.loginfo("Got a command v = %2.1f  s = %2.1f" % (lin_x, ang_z))
+		rospy.logdebug("Got a command v = %2.1f  s = %2.1f" % (lin_x, ang_z))
 		self.send_servo_msg()
 
 	def set_actuators_idle(self):
 		# -- Convert vel into servo values
 		self.actuators['throttle'].get_value_out(0)
 		self.actuators['steering'].get_value_out(0)
-		rospy.loginfo("Setting actuators to idle")
+		rospy.logdebug("Setting actuators to idle")
 		self.send_servo_msg()
 
 	def send_servo_msg(self):
 		for actuator_name, servo_obj in self.actuators.items():
-			self._servo_msg.pwms[servo_obj.id - 1].pwm_num = servo_obj.id
+			self._servo_msg.pwms[servo_obj.id - 1].pwm_num = servo_obj.id - 1
 			self._servo_msg.pwms[servo_obj.id - 1].freq = FREQ
 			self._servo_msg.pwms[servo_obj.id - 1].duty = servo_obj.value_out
-			rospy.loginfo("Sending to %s command %f" % (actuator_name, servo_obj.value_out))
+			rospy.logdebug("Sending to %s command %f" % (actuator_name, servo_obj.value_out))
 
 		self.ros_pub_servo_array.publish(self._servo_msg)
 
@@ -139,10 +142,10 @@ class DkLowLevelCtrl:
 	def run(self):
 
 		# --- Set the control rate
-		rate = rospy.Rate(RATE)
+		rate = rospy.Rate(self.rate)
 
 		while not rospy.is_shutdown():
-			rospy.loginfo(f"Emergency Stop = {self.is_emergency_stop}, Connected = {self.is_controller_connected}")
+			rospy.logdebug(f"Emergency Stop = {self.is_emergency_stop}, Connected = {self.is_controller_connected}")
 			if self.is_emergency_stop or not self.is_controller_connected:
 				self.set_actuators_idle()
 
