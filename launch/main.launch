@@ -1,17 +1,27 @@
 <launch>
 
     <!-- max speed of the car, value between 0 (not moving and all) and 1 (full speed) -->
-    <arg name="max_speed" default="0.23"/>
+    <arg name="max_speed" default="0.20"/>
     <!-- Refresh rate of main driving controller -->
     <arg name="hz" default="15"/>
 
 
-    <node pkg="ros_pi_pwm" type="pwm.py" name="pwm_node" output="screen"/>
+    <!-- steering center in percent. 7.5 theoretical, exact value has to be tested -->
+    <arg name="steering_center" default="7.8"/>
+    
+    <!-- engine center in percent. 7.5 theoretical -->
+    <arg name="engine_center" default="7.5"/>
+
+
+    <node pkg="ros_pi_pwm" type="pwm.py" name="pwm_node"/>
 
     <node pkg="carmaster" type="main.py" name="carmaster_node" output="screen" >
 
         <param name="max_speed" type="double" value="$(arg max_speed)" />
         <param name="hz" type="int" value="$(arg hz)" />
+        
+        <param name="steering_center" type="double" value="$(arg steering_center)" />
+        <param name="engine_center" type="double" value="$(arg engine_center)" />
 
     </node>
 

@@ -43,7 +43,12 @@ class DkLowLevelCtrl:
 		self.rate = rospy.get_param('~hz', 10)
 		rospy.loginfo(f"Refreshing at {self.rate} HZ.")
 
-		self.actuators = {'throttle': ServoConvert(id=2), 'steering': ServoConvert(id=1, direction=1)}
+		self.actuators = {
+			'steering': ServoConvert(id=1,
+									center_value=rospy.get_param('~steering_center', 7.5)),
+			'throttle': ServoConvert(id=2, 
+									center_value=rospy.get_param('~engine_center', 7.5)) 
+			}
 		rospy.loginfo("> Actuators corrrectly initialized")
 
 		self._servo_msg = PWMArray()
