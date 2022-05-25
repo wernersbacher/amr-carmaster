@@ -6,12 +6,22 @@
     <arg name="hz" default="15"/>
 
 
-    <node pkg="ros_pi_pwm" type="pwm.py" name="pwm_node" output="screen"/>
+    <!-- steering center in percent. 7.5 theoretical, exact value has to be tested -->
+    <arg name="steering_center" default="7.8"/>
+    
+    <!-- engine center in percent. 7.5 theoretical -->
+    <arg name="engine_center" default="7.45"/>
+
+
+    <node pkg="ros_pi_pwm" type="pwm.py" name="pwm_node"/>
 
     <node pkg="carmaster" type="main.py" name="carmaster_node" output="screen" >
 
         <param name="max_speed" type="double" value="$(arg max_speed)" />
         <param name="hz" type="int" value="$(arg hz)" />
+        
+        <param name="steering_center" type="double" value="$(arg steering_center)" />
+        <param name="engine_center" type="double" value="$(arg engine_center)" />
 
     </node>
 
