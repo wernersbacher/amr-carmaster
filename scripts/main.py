@@ -12,12 +12,12 @@ def saturate_number(x, lower, upper):
 
 class ServoConvert:
 	# range is 5-10% (1-2ms)
-	def __init__(self, id=1, center_value=7.5, range=5, direction=1):
+	def __init__(self, id=1, center_value=7.5, range_both=5, direction=1):
 		self.value = 0.0
 		self.value_out = center_value
 		self._center = center_value
-		self._range = range
-		self._half_range = 0.5 * range
+		self._range = range_both
+		self._half_range = 0.5 * range_both
 		self._dir = direction
 		self.id = id
 
@@ -39,6 +39,7 @@ class DkLowLevelCtrl:
 		rospy.init_node('carmaster')
 
 		self.max_speed = rospy.get_param('~max_speed', 1.0)
+		self.max_speed_backwards = rospy.get_param('~max_speed_backwards', 1.0)
 		rospy.loginfo(f"Max Speed of {self.max_speed} allowed.")
 		self.rate = rospy.get_param('~hz', 10)
 		rospy.loginfo(f"Refreshing at {self.rate} HZ.")
@@ -47,7 +48,8 @@ class DkLowLevelCtrl:
 			'steering': ServoConvert(id=1,
 									center_value=rospy.get_param('~steering_center', 7.5)),
 			'throttle': ServoConvert(id=2, 
-									center_value=rospy.get_param('~engine_center', 7.5)) 
+									center_value=rospy.get_param('~engine_center', 7.5),
+									direction=-1) 
 			}
 		rospy.loginfo("> Actuators corrrectly initialized")
 
@@ -103,8 +105,12 @@ class DkLowLevelCtrl:
 		# -- Save the time
 		self._last_time_cmd_rcv = time.time()
 
-		
-		lin_x = saturate_number(message.linear.x, -1, 1) * self.max_speed
+		lin_x = saturate_number(message.linear.x, -1, 1)
+
+		if lin_x >= 0:
+			lin_x *= self.max_speed
+		else:
+			lin_x *= self.max_speed_backwards
 		ang_z = saturate_number(message.angular.z, -1, 1)
 		
 		if not (-1 <= message.linear.x <= 1):
