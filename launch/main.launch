@@ -1,8 +1,9 @@
 <launch>
 
     <!-- max speed of the car, value between 0 (not moving and all) and 1 (full speed) -->
-    <arg name="max_speed" default="0.25"/> 
-    <arg name="max_speed_backwards" default="0.2"/> 
+    <!-- keep at 1, speed controlling should be done on sender side -->
+    <arg name="max_speed" default="1"/> 
+    <arg name="max_speed_backwards" default="1"/> 
     <!-- Refresh rate of main driving controller -->
     <arg name="hz" default="15"/>
 

@@ -5,6 +5,7 @@ from std_msgs.msg import Bool
 import time
 
 FREQ = 50
+TIMEOUT_CMD = 20  # return to idle state if there wasnt a different signal in 20 seconds
 
 def saturate_number(x, lower, upper):
 	return min(max(x, lower), upper)
@@ -67,7 +68,7 @@ class DkLowLevelCtrl:
 
 		# --- Get the last time we got a command
 		self._last_time_cmd_rcv = time.time()
-		self._timeout_cmd = 10
+		self._timeout_cmd = TIMEOUT_CMD
 
 		# --- Create the Subscriber to lifeping
 		self.ros_sub_twist = rospy.Subscriber("/emergency_stop", Bool, self.check_emergency_state)
