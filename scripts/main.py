@@ -7,9 +7,10 @@ import time
 FREQ = 50
 TIMEOUT_CMD = 20  # return to idle state if there wasnt a different signal in 20 seconds
 
+
 def saturate_number(x, lower, upper):
 	return min(max(x, lower), upper)
-    
+
 
 class ServoConvert:
 	# range is 5-10% (1-2ms)
@@ -117,18 +118,17 @@ class DkLowLevelCtrl:
 		if not (-1 <= message.linear.x <= 1):
 			rospy.logwarn("Movement message is bigger than 1 (or smaller than -1)! Will be saturated!")
 			rospy.logwarn(f"message.linear.x={message.linear.x}")
-			
 
 		if not (-1 <= message.angular.z <= 1):
 			rospy.logwarn("Movement message is bigger than 1! (or smaller than -1)! Will be saturated!")
 			rospy.logwarn(f"message.angular.z={message.angular.z}")
-			
-
-		# -- Convert vel into servo values
-		self.actuators['throttle'].get_value_out(lin_x)
-		self.actuators['steering'].get_value_out(ang_z)
-		rospy.logdebug("Got a command v = %2.1f  s = %2.1f" % (lin_x, ang_z))
-		self.send_servo_msg()
+		
+		if self.is_allowed_to_drive():
+			# -- Convert vel into servo values
+			self.actuators['throttle'].get_value_out(lin_x)
+			self.actuators['steering'].get_value_out(ang_z)
+			rospy.logdebug("Got a command v = %2.1f  s = %2.1f" % (lin_x, ang_z))
+			self.send_servo_msg()
 
 	def set_actuators_idle(self):
 		# -- Convert vel into servo values
@@ -151,6 +151,9 @@ class DkLowLevelCtrl:
 		rospy.logdebug(time.time() - self._last_time_cmd_rcv)
 		return time.time() - self._last_time_cmd_rcv < self._timeout_cmd
 
+	def is_allowed_to_drive(self):
+		return not (self.is_emergency_stop or not self.is_controller_connected)
+
 	def run(self):
 
 		# --- Set the control rate
@@ -158,7 +161,7 @@ class DkLowLevelCtrl:
 
 		while not rospy.is_shutdown():
 			rospy.loginfo(f"Emergency Stop = {self.is_emergency_stop}, Connected = {self.is_controller_connected}")
-			if self.is_emergency_stop or not self.is_controller_connected:
+			if not self.is_allowed_to_drive():
 				self.set_actuators_idle()
 
 			rate.sleep()
