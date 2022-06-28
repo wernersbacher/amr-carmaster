@@ -5,7 +5,7 @@
     <arg name="max_speed" default="1"/> 
     <arg name="max_speed_backwards" default="1"/> 
     <!-- Refresh rate of main driving controller -->
-    <arg name="hz" default="15"/>
+    <arg name="hz" default="20"/>
 
     <!-- steering center in percent. 7.5 theoretical, exact value has to be tested -->
     <arg name="steering_center" default="7.8"/>
